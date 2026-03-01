@@ -31,7 +31,8 @@ I switch to English and it works too.
 فارسی هم کار می‌کند.
 ```
 
-Each paragraph is detected independently and gets the correct direction. No manual `set text`. No `dir: rtl`. Just write.
+Each paragraph is detected independently and gets the correct language tag.
+Typst then handles direction automatically from `lang`. Just write.
 
 ---
 
@@ -56,6 +57,12 @@ Prefer the behaviour of Apple Notes and WhatsApp, where the **first character** 
 ```
 
 Switch algorithms mid-document at any point with another `#show: auto-dir.with(...)`.
+
+For Arabic-script documents that are primarily Persian, you can set:
+
+```typst
+#show: auto-dir.with(arabic-script-lang: "fa")
+```
 
 ---
 
@@ -82,21 +89,21 @@ The direction of a list or enum is determined by the list as a whole, not item b
 
 ---
 
-## Forcing direction
+## Forcing language
 
-Sometimes auto-detection isn't enough. `auto-bidi` gives you full control.
+Sometimes auto-detection isn't enough. `auto-bidi` lets you force language explicitly.
 
 ### Block scope
 
 ```typst
-// Force Hebrew on a specific block, regardless of content
+// Force Hebrew language on a specific block, regardless of content
 #rl[
-  This sentence is forced RTL even though it's written in English.
+  This sentence is tagged as Hebrew even though it's written in English.
 ]
 
-// Force English (LTR) on a block
+// Force English language on a block
 #lr[
-  גם עברית כאן תופיע שמאל-לימין.
+  גם עברית כאן תהיה מתויגת כאנגלית.
 ]
 
 // Any language, including Farsi
@@ -121,6 +128,7 @@ Back to automatic detection from here.
 |---------|--------|
 | `#sethebrew` | Force Hebrew from this point |
 | `#setarabic` | Force Arabic from this point |
+| `#setfarsi` | Force Farsi (Persian) from this point |
 | `#setenglish` | Force English from this point |
 | `#setauto` | Return to auto-detection |
 
@@ -148,12 +156,28 @@ Sometimes a heading or paragraph is genuinely ambiguous — equal amounts of Heb
 
 ## Farsi / Persian
 
-Farsi uses Arabic script and is detected as Arabic by the character scanner. For proper Farsi shaping and hyphenation, use `force-lang` or `sethebrew`/`setauto` with the `"fa"` code:
+Farsi uses Arabic script, so it is RTL either way.  
+For document direction, treating it like Arabic is enough.  
+For language-specific shaping and hyphenation, prefer the `"fa"` language code:
 
 ```typst
 #force-lang("fa")[
   این یک پاراگراف فارسی است که با فونت و قواعد زبان فارسی نمایش داده می‌شود.
 ]
+```
+
+For section-level control:
+
+```typst
+#setfarsi
+این بخش فارسی است.
+#setauto
+```
+
+If your whole document is Persian, set:
+
+```typst
+#show: auto-dir.with(arabic-script-lang: "fa")
 ```
 
 ---
@@ -179,11 +203,12 @@ Pass a single string or an array of fallback fonts for any script.
 | Export | Description |
 |--------|-------------|
 | `auto-dir` | Main show-rule wrapper — apply once to the whole document |
-| `force-lang(body, lang)` | Force a BCP 47 language code on a block |
-| `rl(body, lang: "he")` | Force RTL on a block |
-| `lr(body, lang: "en")` | Force LTR on a block |
+| `force-lang(lang, body)` | Force a BCP 47 language code on a block |
+| `rl(body, lang: "he")` | Convenience wrapper for `force-lang`, defaulting to Hebrew |
+| `lr(body, lang: "en")` | Convenience wrapper for `force-lang`, defaulting to English |
 | `sethebrew` | Force Hebrew from this point onward |
 | `setarabic` | Force Arabic from this point onward |
+| `setfarsi` | Force Farsi (Persian) from this point onward |
 | `setenglish` | Force English from this point onward |
 | `setauto` | Return to auto-detection |
 | `hechar` | Invisible Hebrew hint character |

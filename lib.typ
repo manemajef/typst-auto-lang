@@ -3,7 +3,7 @@
 #let detect-by-state = state("auto-dir.detect-by", "auto")
 
 /// State for section-level language override.
-/// `none` means auto-detect; `"he"`, `"ar"`, or `"en"` forces that language.
+/// `none` means auto-detect; `"he"`, `"ar"`, `"fa"`, or `"en"` forces that language.
 #let lang-state = state("auto-dir.lang", none)
 
 /// Force all subsequent blocks to Hebrew until `#setauto`.
@@ -11,6 +11,9 @@
 
 /// Force all subsequent blocks to Arabic until `#setauto`.
 #let setarabic = lang-state.update(_ => "ar")
+
+/// Force all subsequent blocks to Farsi (Persian) until `#setauto`.
+#let setfarsi = lang-state.update(_ => "fa")
 
 /// Force all subsequent blocks to English until `#setauto`.
 #let setenglish = lang-state.update(_ => "en")
@@ -25,24 +28,23 @@
 /// - body (content): The content to apply the language to.
 /// -> content
 #let force-lang(lang, body) = {
-  let dir = if lang == "en" { ltr } else { rtl }
-  show par: it => [#set text(lang: lang, dir: dir); #it]
-  show heading: it => [#set text(lang: lang, dir: dir); #it]
-  show list: it => [#set text(lang: lang, dir: dir); #it]
-  show enum: it => [#set text(lang: lang, dir: dir); #it]
-  [#set text(lang: lang, dir: dir); #body]
+  show par: it => [#set text(lang: lang); #it]
+  show heading: it => [#set text(lang: lang); #it]
+  show list: it => [#set text(lang: lang); #it]
+  show enum: it => [#set text(lang: lang); #it]
+  [#set text(lang: lang); #body]
 }
 
-/// Force right-to-left language on a content block.
+/// Convenience wrapper for forcing Hebrew language on a content block.
 ///
-/// - body (content): The content to render RTL.
+/// - body (content): The content to render.
 /// - lang (string): Language code, defaults to `"he"` (Hebrew).
 /// -> content
 #let rl(body, lang: "he") = force-lang(lang, body)
 
-/// Force left-to-right language on a content block.
+/// Convenience wrapper for forcing English language on a content block.
 ///
-/// - body (content): The content to render LTR.
+/// - body (content): The content to render.
 /// - lang (string): Language code, defaults to `"en"` (English).
 /// -> content
 #let lr(body, lang: "en") = force-lang(lang, body)
@@ -52,17 +54,19 @@
 #let archar = hide[ا]
 #let enchar = hide[a]
 
-/// Apply automatic language and direction detection to the document.
+/// Apply automatic language detection to the document.
 ///
 /// Wraps the document with show rules that detect the dominant script in each
-/// paragraph, heading, list, and enum, then sets `text(lang:)` accordingly so
-/// Typst can apply correct directionality, shaping, and hyphenation.
+/// paragraph, heading, list, and enum, then sets `text(lang:)` accordingly.
+/// Typst then applies directionality, shaping, and hyphenation from `lang`.
 ///
 /// - hebrew-font (string, array): Font(s) used for Hebrew text.
 /// - english-font (string, array): Font(s) used for English text.
 /// - arab-font (string, array): Font(s) used for Arabic text.
 /// - detect-by (string): Detection algorithm — `"auto"` (majority of chars)
 ///   or `"first"` (first recognised script char, like Apple Notes).
+/// - arabic-script-lang (string): Language tag for Arabic-script detection
+///   (supported: `"ar"` or `"fa"`).
 /// - default-lang (string): Fallback language when no script is detected.
 /// - doc (content): The document body (passed automatically via `show:`).
 /// -> content
@@ -72,6 +76,7 @@
   arab-font: "Libertinus Serif",
   base-font: "New Computer Modern",
   detect-by: "auto",
+  arabic-script-lang: "ar",
   default-lang: "en",
   doc,
 ) = {
@@ -105,7 +110,9 @@
   }
 
   let detect-char(ch) = {
-    if ch.matches(heb).len() > 0 { "he" } else if ch.matches(ara).len() > 0 { "ar" } else if ch.matches(lat).len() > 0 {
+    if ch.matches(heb).len() > 0 { "he" } else if ch.matches(ara).len() > 0 { arabic-script-lang } else if (
+      ch.matches(lat).len() > 0
+    ) {
       "en"
     } else { none }
   }
@@ -123,7 +130,9 @@
     let nh = txt.matches(heb).len()
     let na = txt.matches(ara).len()
     let nl = txt.matches(lat).len()
-    if nh + na + nl == 0 { default-lang } else if nh + na > nl { if nh >= na { "he" } else { "ar" } } else { "en" }
+    if nh + na + nl == 0 { default-lang } else if nh + na > nl {
+      if nh >= na { "he" } else { arabic-script-lang }
+    } else { "en" }
   }
 
   let apply(it, source) = context {
@@ -134,14 +143,15 @@
     } else {
       detect-auto(source)
     }
-    let dir = if lang == "en" { ltr } else { rtl }
-    [#set text(lang: lang, dir: dir); #it]
+    [#set text(lang: lang); #it]
   }
 
   show par: it => apply(it, it.body)
   show heading: it => apply(it, it.body)
+  show title: it => apply(it, it.body)
   show list: it => apply(it, it)
   show enum: it => apply(it, it)
 
   [#detect-by-state.update(_ => detect-by) #doc]
 }
+

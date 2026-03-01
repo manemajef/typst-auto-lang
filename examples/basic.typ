@@ -1,6 +1,6 @@
 #import "../lib.typ": *
 #show: auto-dir
-
+#title[Auto-Bidi]
 = auto-bidi: basic example
 
 == Automatic detection
@@ -25,9 +25,9 @@ also, $f(x) = x^2$ גם אם מתחילים באנגלית, אבל הרוב עב
 - second item — still RTL, the list is Hebrew overall
 - פריט שלישי
 
-== Forcing direction on a block
+== Forcing language on a block
 
-#rl[This is forced RTL even though it is written in English.]
+#rl[This is tagged as Hebrew even though it is written in English.]
 
 #lr[גם עברית כאן תופיע שמאל-לימין.]
 

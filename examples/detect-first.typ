@@ -6,11 +6,11 @@
 With `detect-by: "first"`, the *first* recognised script character sets the
 direction — like Apple Notes, WhatsApp, and Obsidian.
 
-Use the `#enchar`, `#archar` or `#hechar` to add invisble lang char. for example:
+Use `#enchar`, `#archar`, or `#hechar` to add an invisible language hint character. For example:
 
 
 
-#archar this paragraph starts with english,
+#archar this paragraph starts with English,
 
 = A הרבה עברית כתובה פה
 
@@ -31,4 +31,3 @@ Starts with Arabic → RTL.
 = A הרבה עברית כתובה פה
 
 Now this is RTL — Hebrew characters outnumber Latin ones.
-
