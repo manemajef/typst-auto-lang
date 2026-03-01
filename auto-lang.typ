@@ -31,6 +31,7 @@
 #let lang-regex = (
   en: regex("\p{Latin}"),
   he: regex("\p{Hebrew}"),
+  ar: regex("\p{Arabic}"),
 )
 
 // get fonts array with regex match
@@ -92,7 +93,7 @@
 /// Ignores math equations and raw/code blocks.
 #let detect-lang(detect-by: "freq", body) = {
   if detect-by == "first" {
-    return _first-lang-char(body)  // "he", "en", or none
+    return _first-lang-char(body) // "he", "en", or none
   }
   let s = _extract-text(body)
   let heb = s.matches(regex("\p{Hebrew}")).len()
@@ -101,10 +102,10 @@
 }
 
 /// Force-Hebrew span — bypasses auto-detection for its content.
-#let he(body) = [#set text(lang: "he"); #body]
+#let he(body) = [#set text(lang: "he", dir: rtl); #body]
 
 /// Force-English span — bypasses auto-detection for its content.
-#let en(body) = [#set text(lang: "en"); #body]
+#let en(body) = [#set text(lang: "en", dir: ltr); #body]
 
 /// Document wrapper.  Apply once at the top of your entry file: \n #show: setup
 #let lang-setup(
