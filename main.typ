@@ -16,6 +16,8 @@ $f(x) = x^2$ עברית
 - האם
 - זה עובד ?
 
+\
+
 = a שלום כלבה
 
 #show: lang-setup.with(detect-by: "freq")
@@ -24,5 +26,5 @@ $f(x) = x^2$ עברית
 
 Here, The algorithm is Smarter --- אם רוב הפסקה תהיה כתובה בעברית, אז הכיוון יהיה `RTL` ,
 
-= #he[HERY? ]
+
 
