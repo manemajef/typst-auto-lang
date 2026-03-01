@@ -1,30 +1,20 @@
-#import "auto-lang.typ": *
-#show: lang-setup.with(detect-by: "first")
+#import "lib.typ": *
+#show: auto-dir.with(detect-by: "auto")
 
-= שלום
-זה פסקה שאמורה להיות בעברית
 
-this is ment to be in enlgish
+= Auto--dir
+== Overview
+This is a simple lib that auto detects language, and ment for _Arabic_ and _Hebrew_ scripts which requires manual lang decleration for _RTL_ direction.
 
-== headings should be auto detecred
+== דוגמא
+אם כותבים פסקה בעברית, אז אוטומטית זה נהיה RTL
 
-== כותרות אמורות להיות מזוהות
-
-$f(x) = x^2$ עברית
-
-- רשימה
-- האם
-- זה עובד ?
-
-\
-
-= a שלום כלבה
-
-#show: lang-setup.with(detect-by: "freq")
-
-= a שלום כלבה
-
-Here, The algorithm is Smarter --- אם רוב הפסקה תהיה כתובה בעברית, אז הכיוון יהיה `RTL` ,
+also, $f(x) = x^2$  גם אם מתחילים באנגלית, אבל הרוב עברית -- זה עדיין עובד.
 
 
 
+== `detect-by: "first"`
+#show: auto-dir.with(detect-by: "first")
+If you want the detection algorithm to work like in apple notes etc (detected by first char), you can set: `show: auto-dir.with(detect-by = "first")`
+
+= A הרבה עברית
