@@ -54,6 +54,53 @@
 #let archar = hide[ا]
 #let enchar = hide[a]
 
+/// Extract plain text from a content block, ignoring math and raw.
+#let _plain(c) = {
+  if type(c) == str { return c }
+  let f = c.func()
+  if f == math.equation or f == raw { return "" }
+  let fields = c.fields()
+  if "children" in fields { return fields.children.map(_plain).join("") }
+  if "child" in fields { return _plain(fields.child) }
+  if "body" in fields { return _plain(fields.body) }
+  if "text" in fields { return _plain(fields.text) }
+  ""
+}
+
+/// Detect the dominant language of a content block.
+/// Returns `"he"`, `"ar"`, `"fa"`, or `"en"`.
+///
+/// - body (content): The content to inspect.
+/// - detect-by (string): `"auto"` (majority) or `"first"` (first script char).
+/// - arabic-script-lang (string): Language for Arabic-script text (`"ar"` or `"fa"`).
+/// - default-lang (string): Fallback when no script is detected.
+/// -> string
+#let detect-lang(
+  body,
+  detect-by: "auto",
+  arabic-script-lang: "ar",
+  default-lang: "en",
+) = {
+  let heb = regex("\p{Hebrew}")
+  let ara = regex("\p{Arabic}")
+  let lat = regex("\p{Latin}")
+  let txt = _plain(body)
+  if detect-by == "first" {
+    for ch in txt.clusters() {
+      if ch.matches(heb).len() > 0 { return "he" }
+      if ch.matches(ara).len() > 0 { return arabic-script-lang }
+      if ch.matches(lat).len() > 0 { return "en" }
+    }
+    return default-lang
+  }
+  let nh = txt.matches(heb).len()
+  let na = txt.matches(ara).len()
+  let nl = txt.matches(lat).len()
+  if nh + na + nl == 0 { default-lang } else if nh + na > nl {
+    if nh >= na { "he" } else { arabic-script-lang }
+  } else { "en" }
+}
+
 /// Apply automatic language detection to the document.
 ///
 /// Wraps the document with show rules that detect the dominant script in each
@@ -97,18 +144,6 @@
     base-font,
   ))
 
-  let plain(c) = {
-    if type(c) == str { return c }
-    let f = c.func()
-    if f == math.equation or f == raw { return "" }
-    let fields = c.fields()
-    if "children" in fields { return fields.children.map(plain).join("") }
-    if "child" in fields { return plain(fields.child) }
-    if "body" in fields { return plain(fields.body) }
-    if "text" in fields { return plain(fields.text) }
-    ""
-  }
-
   let detect-char(ch) = {
     if ch.matches(heb).len() > 0 { "he" } else if ch.matches(ara).len() > 0 { arabic-script-lang } else if (
       ch.matches(lat).len() > 0
@@ -118,7 +153,7 @@
   }
 
   let detect-first(c) = {
-    for ch in plain(c).clusters() {
+    for ch in _plain(c).clusters() {
       let lang = detect-char(ch)
       if lang != none { return lang }
     }
@@ -126,7 +161,7 @@
   }
 
   let detect-auto(c) = {
-    let txt = plain(c)
+    let txt = _plain(c)
     let nh = txt.matches(heb).len()
     let na = txt.matches(ara).len()
     let nl = txt.matches(lat).len()
