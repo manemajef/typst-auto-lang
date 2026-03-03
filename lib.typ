@@ -1,6 +1,6 @@
 /// State controlling the detection algorithm mid-document.
-/// Values: `"auto"` (majority wins) or `"first"` (first script char wins).
-#let detect-by-state = state("auto-dir.detect-by", "auto")
+/// Values: `"first"` (first script char wins) or `"auto"` (majority wins).
+#let detect-by-state = state("auto-dir.detect-by", "first")
 
 /// State for section-level language override.
 /// `none` means auto-detect; `"he"`, `"ar"`, `"fa"`, or `"en"` forces that language.
@@ -50,9 +50,13 @@
 #let lr(body, lang: "en") = force-lang(lang, body)
 
 /// Invisible hebrew/english/arabic character — use to bias detection toward lang
-#let hechar = hide[א]
-#let archar = hide[ا]
-#let enchar = hide[a]
+#let hechar = text(size: 0pt)[א]
+#let archar = text(size: 0pt)[ا]
+#let enchar = text(size: 0pt)[a]
+
+/// Shorthand aliases for direction hint characters
+#let r = text(size: 0pt)[י]
+#let l = text(size: 0pt)[i]
 
 /// Extract plain text from a content block, ignoring math and raw.
 #let _plain(c) = {
@@ -71,13 +75,13 @@
 /// Returns `"he"`, `"ar"`, `"fa"`, or `"en"`.
 ///
 /// - body (content): The content to inspect.
-/// - detect-by (string): `"auto"` (majority) or `"first"` (first script char).
+/// - detect-by (string): `"first"` (first script char) or `"auto"` (majority of chars).
 /// - arabic-script-lang (string): Language for Arabic-script text (`"ar"` or `"fa"`).
 /// - default-lang (string): Fallback when no script is detected.
 /// -> string
 #let detect-lang(
   body,
-  detect-by: "auto",
+  detect-by: "first",
   arabic-script-lang: "ar",
   default-lang: "en",
 ) = {
@@ -85,20 +89,40 @@
   let ara = regex("\p{Arabic}")
   let lat = regex("\p{Latin}")
   let txt = _plain(body)
-  if detect-by == "first" {
+  if detect-by == "auto" {
+    let nh = txt.matches(heb).len()
+    let na = txt.matches(ara).len()
+    let nl = txt.matches(lat).len()
+    if nh + na + nl == 0 { default-lang } else if nh + na > nl {
+      if nh >= na { "he" } else { arabic-script-lang }
+    } else { "en" }
+  } else {
+    // "first" mode (default)
     for ch in txt.clusters() {
       if ch.matches(heb).len() > 0 { return "he" }
       if ch.matches(ara).len() > 0 { return arabic-script-lang }
       if ch.matches(lat).len() > 0 { return "en" }
     }
-    return default-lang
+    default-lang
   }
-  let nh = txt.matches(heb).len()
-  let na = txt.matches(ara).len()
-  let nl = txt.matches(lat).len()
-  if nh + na + nl == 0 { default-lang } else if nh + na > nl {
-    if nh >= na { "he" } else { arabic-script-lang }
-  } else { "en" }
+}
+
+/// Detect the direction of a content block.
+/// Returns `"rtl"` or `"ltr"`.
+///
+/// - body (content): The content to inspect.
+/// - detect-by (string): `"first"` (first script char) or `"auto"` (majority of chars).
+/// - arabic-script-lang (string): Language for Arabic-script text (`"ar"` or `"fa"`).
+/// - default-lang (string): Fallback when no script is detected.
+/// -> string
+#let detect-dir(
+  body,
+  detect-by: "first",
+  arabic-script-lang: "ar",
+  default-lang: "en",
+) = {
+  let lang = detect-lang(body, detect-by: detect-by, arabic-script-lang: arabic-script-lang, default-lang: default-lang)
+  if lang in ("he", "ar", "fa") { "rtl" } else { "ltr" }
 }
 
 /// Apply automatic language detection to the document.
@@ -110,8 +134,8 @@
 /// - hebrew-font (string, array): Font(s) used for Hebrew text.
 /// - english-font (string, array): Font(s) used for English text.
 /// - arab-font (string, array): Font(s) used for Arabic text.
-/// - detect-by (string): Detection algorithm — `"auto"` (majority of chars)
-///   or `"first"` (first recognised script char, like Apple Notes).
+/// - detect-by (string): Detection algorithm — `"first"` (first recognised
+///   script char, like Apple Notes) or `"auto"` (majority of chars).
 /// - arabic-script-lang (string): Language tag for Arabic-script detection
 ///   (supported: `"ar"` or `"fa"`).
 /// - default-lang (string): Fallback language when no script is detected.
@@ -122,7 +146,7 @@
   english-font: ("New Computer Modern", "Libertinus Serif"),
   arab-font: "Libertinus Serif",
   base-font: "New Computer Modern",
-  detect-by: "auto",
+  detect-by: "first",
   arabic-script-lang: "ar",
   default-lang: "en",
   doc,
@@ -173,10 +197,10 @@
   let apply(it, source) = context {
     let lang = if lang-state.get() != none {
       lang-state.get()
-    } else if detect-by-state.get() == "first" {
-      detect-first(source)
-    } else {
+    } else if detect-by-state.get() == "auto" {
       detect-auto(source)
+    } else {
+      detect-first(source)
     }
     [#set text(lang: lang); #it]
   }
